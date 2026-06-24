@@ -1,17 +1,40 @@
 console.log("Initialisation de la carte");
 
 try {
+    // Store markers per shark name
+    const markers = {};
+
+    function clearSharks() {
+        console.log("clearSharks");
+        Object.values(markers).forEach(function (info) {
+            map.removeLayer(info.marker);
+        });
+        // Vide l'objet markers et la liste HTML
+        Object.keys(markers).forEach(function (k) { delete markers[k]; });
+        document.getElementById('shark-list').innerHTML = '';
+    }
+
+    function loadYear(year) {
+        console.log("loadYear");
+        clearSharks();
+        fetch("data/sharks-" + year + ".json")
+            .then(function (res) { return res.json(); })
+            .then(function (data) { loadSharks(data); })
+            .catch(function (err) { console.error("Erreur chargement JSON :", err); });
+    }
+
     document.getElementById('map-placeholder').style.display = 'none';
     document.getElementById('map').style.display = 'block';
+    document.getElementById('year-select').addEventListener('change', function () {
+        console.log("year-select:change");
+        loadYear(this.value);
+    });
 
     const map = L.map('map').setView([20, -30], 3);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
     }).addTo(map);
-
-    // Store markers per shark name
-    const markers = {};
 
     // Toggle a single shark's visibility
     function toggleShark(name, visible) {
@@ -118,14 +141,10 @@ try {
         });
     });
 
-    // Load JSON data
-    fetch("data/sharks-2019.json")
-        .then(function (res) { return res.json(); })
-        .then(function (data) { loadSharks(data); })
-        .catch(function (err) { console.error("Erreur chargement JSON :", err); });
-
+    loadYear(2019);
 } catch (e) {
     document.getElementById('map-placeholder').style.display = 'flex';
     document.getElementById('map').style.display = 'none';
     console.error("Erreur d'initialisation de la carte :", e);
 }
+
